@@ -1,0 +1,127 @@
+---
+title: "Practical Machine Learning Project"
+author: "Orsolya Nyari"
+date: "2026-04-30"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+library(dplyr)
+library(caret)
+library(randomForest)
+library(gbm)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 1. Introduction
+
+The goal of this project is to predict the manner in which participants performed barbell lifts using accelerometer data.
+
+The outcome variable is **classe**, which represents five different execution styles (A–E).
+
+# 2. Data Cleaning
+We remove variables with too many missing values and irrelevant metadata.
+
+```{r}
+train <- read.csv("pml-training.csv")
+test <- read.csv("pml-testing.csv")
+
+train_clean <- train %>%
+  select_if(~ sum(is.na(.)) < 0.5 * nrow(train)) %>%
+  select(-c(X, user_name,
+            raw_timestamp_part_1,
+            raw_timestamp_part_2,
+            cvtd_timestamp,
+            new_window))
+
+# Remove near-zero variance (VERY IMPORTANT SPEED BOOST)
+nzv <- caret::nearZeroVar(train_clean)
+train_clean <- train_clean[, -nzv]
+
+```
+# 3. Train/Test Split
+We split the dataset into training and validation sets.
+
+```{r}
+set.seed(123)
+inTrain <- caret::createDataPartition(train_clean$classe, p = 0.7, list = FALSE)
+
+training <- train_clean[inTrain, ]
+testing  <- train_clean[-inTrain, ]
+
+```
+# 4. Model1: Random Forest
+Random Forest is used as a strong baseline model.
+```{r}
+set.seed(123)
+
+rf_model <- train(
+  classe ~ .,
+  data = training,
+  method = "rf",
+  trControl = caret::trainControl(method = "cv", number = 3),
+  ntree = 50
+)
+
+rf_pred <- predict(rf_model, testing)
+rf_acc <- mean(rf_pred == testing$classe)
+
+```
+# 5. Model2: Gradient Boosting Machine (GBM)
+GBM is used for comparison and tuning
+```{r}
+set.seed(123)
+
+fitControl <- caret::trainControl(method = "cv", number = 3)
+
+gbm_grid <- expand.grid(
+  interaction.depth = c(3),
+  n.trees = c(100),
+  shrinkage = 0.1,
+  n.minobsinnode = 10
+)
+
+gbm_model <- train(
+  classe ~ .,
+  data = training,
+  method = "gbm",
+  trControl = fitControl,
+  tuneGrid = gbm_grid,
+  verbose = FALSE
+)
+
+gbm_pred <- predict(gbm_model, testing)
+gbm_acc <- mean(gbm_pred == testing$classe)
+
+```
+# 6. Model Comparison
+```{r}
+results <- data.frame(
+  Model = c("Random Forest (fast)", "GBM (fast)"),
+  Accuracy = c(rf_acc, gbm_acc),
+  Error = c(1 - rf_acc, 1 - gbm_acc)
+)
+results
+
+```
+# 7. Variable Importance
+The variable importance plot shows which features contribute most to the prediction. This helps interpret the model and understand which sensor measurements are most relevant.get
+```{r}
+plot(varImp(rf_model))
+```
+
+# 8. Final Model and Prediction
+Random Forest is selected as the final model due to higher accuracy.
+```{r echo=FALSE}
+final_pred <- predict(rf_model, test)
+final_pred
+
+```
+# 9. Conclusion
+Both models performed well on this dataset due to strong signal in sensor data.
+
+Random Forest achieved the highest accuracy and was selected as the final model.
+
+The expected out-of-sample error is approximately 1%.
