@@ -53,4 +53,4 @@ The Random Forest model was used to predict 20 test cases provided in the assign
 
 ## 📌 How to run
 
-Open PML_project.Rmd in RStudio and click Knit to HTML.
+Open PML_project.Rmd in RStudio and click Knit to HTML. Finish
