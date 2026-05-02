@@ -24,17 +24,16 @@ Six participants performed barbell lifts in different ways, and sensor data was 
 
 Two machine learning models were trained:
 
-### 1. Random Forest (final model)
-
-### 2. Gradient Boosting Machine - GBM (comparison)
+- Random Forest (final model)
+- Gradient Boosting Machine - GBM (comparison)
 
 
 ---
 
 ## 📈Results
 
-Random Forest Accuracy: ~0.99
-GBM Accuracy: ~0.97
+- Random Forest Accuracy: ~0.99
+- GBM Accuracy: ~0.97
 
 ---
 
