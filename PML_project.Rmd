@@ -41,6 +41,7 @@ nzv <- caret::nearZeroVar(train_clean)
 train_clean <- train_clean[, -nzv]
 
 ```
+
 # 3. Train/Test Split
 We split the dataset into training and validation sets.
 
@@ -52,6 +53,7 @@ training <- train_clean[inTrain, ]
 testing  <- train_clean[-inTrain, ]
 
 ```
+
 # 4. Model1: Random Forest
 Random Forest is used as a strong baseline model.
 ```{r}
@@ -69,6 +71,7 @@ rf_pred <- predict(rf_model, testing)
 rf_acc <- mean(rf_pred == testing$classe)
 
 ```
+
 # 5. Model2: Gradient Boosting Machine (GBM)
 GBM is used for comparison and tuning
 ```{r}
@@ -96,7 +99,9 @@ gbm_pred <- predict(gbm_model, testing)
 gbm_acc <- mean(gbm_pred == testing$classe)
 
 ```
+
 # 6. Model Comparison
+The results show that both models achieved high accuracy, but Random Forest slightly outperformed GBM. Given its better performance and lower tuning complexity, Random Forest was selected as the final model.
 ```{r}
 results <- data.frame(
   Model = c("Random Forest (fast)", "GBM (fast)"),
@@ -106,20 +111,36 @@ results <- data.frame(
 results
 
 ```
+
 # 7. Variable Importance
-The variable importance plot shows which features contribute most to the prediction. This helps interpret the model and understand which sensor measurements are most relevant.get
+The variable importance plot highlights which sensor measurements contribute most to predicting exercise quality. 
+The variable importance plot indicates that *num_window*, *roll_belt*, and *pitch_forearm* are among the most influential predictors in the Random Forest model.
+These variables capture aspects of movement segmentation (*num_window*) and orientation of the belt and forearm sensors (*roll_belt*, *pitch_forearm*), suggesting that both temporal structure and body positioning play a key role in distinguishing between correct and incorrect exercise execution.
+While *num_window* appears highly important, it may reflect the structure of data collection rather than a true physical measurement, so interpretation should focus more on sensor-based variables such as *roll_belt* and *pitch_forearm*.
 ```{r}
-plot(varImp(rf_model))
+imp <- varImp(rf_model)
+plot(imp, top = 20)
 ```
 
-# 8. Final Model and Prediction
+# 8. Confusion Matrix
+The confusion matrix shows that most predictions are correctly classified, with very few misclassifications across classes.
+```{r}
+testing$classe <- factor(testing$classe)
+rf_pred <- factor(rf_pred, levels = levels(testing$classe))
+cm <- confusionMatrix(rf_pred, testing$classe)
+cm$table
+```
+
+# 9. Final Model and Prediction
 Random Forest is selected as the final model due to higher accuracy.
+The final model was applied to the 20 test cases provided in the assignment. Since the true labels are not available for this dataset, no direct evaluation can be performed. However, based on the high validation accuracy achieved earlier, the model is expected to perform well on these unseen cases.
 ```{r echo=FALSE}
 final_pred <- predict(rf_model, test)
 final_pred
 
 ```
-# 9. Conclusion
+
+# 10. Conclusion
 Both models performed well on this dataset due to strong signal in sensor data.
 
 Random Forest achieved the highest accuracy and was selected as the final model.
